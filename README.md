@@ -1,3 +1,5 @@
+![build status](https://travis-ci.org/dalehamel/ruby-pandoc.svg)
+
 # RubyPandoc
 
 RubyPandoc is a wrapper for [Pandoc](http://johnmacfarlane.net/pandoc/), a
@@ -107,7 +109,7 @@ few different formats, take a look at [Maruku](http://maruku.rubyforge.org/).
 If you want to use the full reStructuredText syntax from within Ruby, check
 out [RbST](https://github.com/alphabetum/rbst), a docutils wrapper.
 
-This gem was inspired by [Albino](http://github.com/github/albino). For a
+This gem was forked from [pandoc-ruby](https://github.com/alphabetum/pandoc-ruby). For a
 slightly different approach to using Pandoc with Ruby, see
 [Pandoku](http://github.com/dahlia/pandoku).
 
