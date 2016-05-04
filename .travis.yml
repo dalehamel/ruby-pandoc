@@ -1,0 +1,7 @@
+language: ruby
+sudo: true
+rvm:
+  - 2.3.0
+install:
+  - bundle
+  - bundle exec rake get_depends
