@@ -51,7 +51,8 @@ class PandocRuby
     'odt'   => 'OpenDocument',
     'docx'  => 'Word docx',
     'epub'  => 'EPUB V2',
-    'epub3' => 'EPUB V3'
+    'epub3' => 'EPUB V3',
+    'pdf'   => 'Portable Document File'
   }.freeze
 
   # All of the available Writers.
