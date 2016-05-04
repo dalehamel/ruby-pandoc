@@ -9,7 +9,7 @@ impl_gems = {
   'BlueCloth'   => 'bluecloth',
   'RDiscount'   => 'rdiscount',
   'Maruku'      => 'maruku',
-  'PandocRuby'  => 'pandoc-ruby'
+  'PandocRuby'  => 'ruby-pandoc'
 }
 
 implementations = impl_gems.keys

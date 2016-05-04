@@ -18,10 +18,10 @@ describe 'Conversions' do
         from_content  = File.read(File.join(files_dir, "format.#{from}"))
         to_content    = File.read(File.join(files_dir, "format.#{to}"))
 
-        converted_content = PandocRuby.convert(
+        converted_content = RubyPandoc::Converter.convert(
           from_content,
-          :from => from,
-          :to   => to
+          from: from,
+          to: to
         )
         assert_equal(converted_content.strip, to_content.strip)
       end

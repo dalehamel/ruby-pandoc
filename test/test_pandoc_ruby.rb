@@ -1,47 +1,47 @@
 require 'helper'
 
-describe PandocRuby do
+describe RubyPandoc::Converter do
   before do
     @file = File.join(File.dirname(__FILE__), 'files', 'test.md')
     @file2 = File.join(File.dirname(__FILE__), 'files', 'test2.md')
     @string = '# Test String'
-    @converter = PandocRuby.new(@string, :t => :rst)
+    @converter = RubyPandoc::Converter.new(@string, t: :rst)
   end
 
   after do
-    PandocRuby.pandoc_path = 'pandoc'
+    RubyPandoc::Converter.pandoc_path = 'pandoc'
   end
 
   it 'calls bare pandoc when passed no options' do
-    converter = PandocRuby.new(@string)
+    converter = RubyPandoc::Converter.new(@string)
     converter.expects(:execute).with('pandoc').returns(true)
     assert converter.convert
   end
 
   it 'converts with altered pandoc_path' do
     path = '/usr/bin/env pandoc'
-    PandocRuby.pandoc_path = path
-    converter = PandocRuby.new(@string)
+    RubyPandoc::Converter.pandoc_path = path
+    converter = RubyPandoc::Converter.new(@string)
     converter.expects(:execute).with(path).returns(true)
     assert converter.convert
   end
 
   it 'converts input passed as a string' do
     assert_equal "<h1 id=\"test-string\">Test String</h1>\n",
-                 PandocRuby.new(@string).to_html
+                 RubyPandoc::Converter.new(@string).to_html
   end
 
   it 'converts single element array input as array of file paths' do
-    assert PandocRuby.new([@file]).to_html.match(/This is a Title/)
+    assert RubyPandoc::Converter.new([@file]).to_html.match(/This is a Title/)
   end
 
   it 'converts multiple element array input as array of file paths' do
-    assert PandocRuby.new([@file, @file2]).to_html.match(/This is a Title/)
-    assert PandocRuby.new([@file, @file2]).to_html.match(/A Second Title/)
+    assert RubyPandoc::Converter.new([@file, @file2]).to_html.match(/This is a Title/)
+    assert RubyPandoc::Converter.new([@file, @file2]).to_html.match(/A Second Title/)
   end
 
   it 'converts multiple element array input as array of file paths to a binary output format' do
-    assert PandocRuby.new([@file, @file2]).to_epub.match(/com.apple.ibooks/)
+    assert RubyPandoc::Converter.new([@file, @file2]).to_epub.match(/com.apple.ibooks/)
   end
 
   it 'accepts short options' do
@@ -50,15 +50,15 @@ describe PandocRuby do
   end
 
   it 'accepts long options' do
-    converter = PandocRuby.new(@string, :to => :rst)
+    converter = RubyPandoc::Converter.new(@string, to: :rst)
     converter.expects(:execute).with('pandoc --to rst').returns(true)
     assert converter.convert
   end
 
   it 'accepts a variety of options in initializer' do
-    converter = PandocRuby.new(@string, :s, {
-      :f => :markdown, :to => :rst
-    }, 'no-wrap')
+    converter = RubyPandoc::Converter.new(@string, :s, {
+                                 f: :markdown, to: :rst
+                               }, 'no-wrap')
     converter \
       .expects(:execute) \
       .with('pandoc -s -f markdown --to rst --no-wrap') \
@@ -67,18 +67,18 @@ describe PandocRuby do
   end
 
   it 'accepts a variety of options in convert' do
-    converter = PandocRuby.new(@string)
+    converter = RubyPandoc::Converter.new(@string)
     converter \
       .expects(:execute) \
       .with('pandoc -s -f markdown --to rst --no-wrap') \
       .returns(true)
-    assert converter.convert(:s, { :f => :markdown, :to => :rst }, 'no-wrap')
+    assert converter.convert(:s, { f: :markdown, to: :rst }, 'no-wrap')
   end
 
   it 'converts underscore symbol ares to hyphenated long options' do
-    converter = PandocRuby.new(@string, {
-      :email_obfuscation => :javascript
-    }, :table_of_contents)
+    converter = RubyPandoc::Converter.new(@string, {
+                                 email_obfuscation: :javascript
+                               }, :table_of_contents)
     converter \
       .expects(:execute) \
       .with('pandoc --email-obfuscation javascript --table-of-contents') \
@@ -87,28 +87,28 @@ describe PandocRuby do
   end
 
   it 'uses second arg as option' do
-    converter = PandocRuby.new(@string, 'toc')
+    converter = RubyPandoc::Converter.new(@string, 'toc')
     converter.expects(:execute).with('pandoc --toc').returns(true)
     assert converter.convert
   end
 
   it 'raises RuntimeError from pandoc executable error' do
     assert_raises(RuntimeError) do
-      PandocRuby.new('# hello', 'badopt').to_html5
+      RubyPandoc::Converter.new('# hello', 'badopt').to_html5
     end
   end
 
-  PandocRuby::READERS.each_key do |r|
-    it "converts from #{r} with PandocRuby.#{r}" do
-      converter = PandocRuby.send(r, @string)
+  RubyPandoc::Converter::READERS.each_key do |r|
+    it "converts from #{r} with RubyPandoc::Converter.#{r}" do
+      converter = RubyPandoc::Converter.send(r, @string)
       converter.expects(:execute).with("pandoc --from #{r}").returns(true)
       assert converter.convert
     end
   end
 
-  PandocRuby::STRING_WRITERS.each_key do |w|
+  RubyPandoc::Converter::STRING_WRITERS.each_key do |w|
     it "converts to #{w} with to_#{w}" do
-      converter = PandocRuby.new(@string)
+      converter = RubyPandoc::Converter.new(@string)
       converter \
         .expects(:execute) \
         .with("pandoc --no-wrap --to #{w}") \
@@ -117,9 +117,9 @@ describe PandocRuby do
     end
   end
 
-  PandocRuby::BINARY_WRITERS.each_key do |w|
+  RubyPandoc::Converter::BINARY_WRITERS.each_key do |w|
     it "converts to #{w} with to_#{w}" do
-      converter = PandocRuby.new(@string)
+      converter = RubyPandoc::Converter.new(@string)
       converter \
         .expects(:execute) \
         .with(regexp_matches(/^pandoc --no-wrap --to #{w} --output /)) \
@@ -129,7 +129,7 @@ describe PandocRuby do
   end
 
   it 'works with strings' do
-    converter = PandocRuby.new('## this is a title')
+    converter = RubyPandoc::Converter.new('## this is a title')
     assert_match(/h2/, converter.convert)
   end
 
@@ -138,13 +138,13 @@ describe PandocRuby do
   end
 
   it 'has convert class method' do
-    assert_equal @converter.convert, PandocRuby.convert(@string, :t => :rst)
+    assert_equal @converter.convert, RubyPandoc::Converter.convert(@string, t: :rst)
   end
 
   it 'runs more than 400 times without error' do
     begin
       400.times do
-        PandocRuby.convert(@string)
+        RubyPandoc::Converter.convert(@string)
       end
       assert true
     rescue Errno::EMFILE, Errno::EAGAIN => e
@@ -157,14 +157,14 @@ describe PandocRuby do
     contents = File.read(file)
 
     assert_raises(RuntimeError) do
-      PandocRuby.convert(
-        contents, :from => :latex, :to => :html, :timeout => 1
+      RubyPandoc::Converter.convert(
+        contents, from: :latex, to: :html, timeout: 1
       )
     end
   end
 
   it 'has reader and writer constants' do
-    assert_equal PandocRuby::READERS,
+    assert_equal RubyPandoc::Converter::READERS,
                  'html'      =>  'HTML',
                  'latex'     =>  'LaTeX',
                  'textile'   =>  'textile',
@@ -173,7 +173,7 @@ describe PandocRuby do
                  'json'      =>  'pandoc JSON',
                  'rst'       =>  'reStructuredText'
 
-    assert_equal PandocRuby::STRING_WRITERS,
+    assert_equal RubyPandoc::Converter::STRING_WRITERS,
                  'mediawiki'     =>  'MediaWiki markup',
                  'html'          =>  'HTML',
                  'plain'         =>  'plain',
@@ -197,13 +197,13 @@ describe PandocRuby do
                  'context'       =>  'ConTeXt',
                  'asciidoc'      =>  'asciidoc'
 
-    assert_equal PandocRuby::BINARY_WRITERS,
+    assert_equal RubyPandoc::Converter::BINARY_WRITERS,
                  'odt'   => 'OpenDocument',
                  'docx'  => 'Word docx',
                  'epub'  => 'EPUB V2',
                  'epub3' => 'EPUB V3'
 
-    assert_equal PandocRuby::WRITERS,
-                 PandocRuby::STRING_WRITERS.merge(PandocRuby::BINARY_WRITERS)
+    assert_equal RubyPandoc::Converter::WRITERS,
+                 RubyPandoc::Converter::STRING_WRITERS.merge(PanRuby::Converter::BINARY_WRITERS)
   end
 end
