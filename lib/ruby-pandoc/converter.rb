@@ -188,6 +188,7 @@ module RubyPandoc
     def create_option(flag, argument = nil)
       return '' unless flag
       flag = flag.to_s
+      return " #{argument}" if flag == 'extra'
       set_pandoc_ruby_options(flag, argument)
       if !argument.nil?
         "#{format_flag(flag)} #{argument}"
