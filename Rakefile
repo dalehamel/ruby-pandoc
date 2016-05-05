@@ -1,9 +1,4 @@
-begin
-  require 'publication'
-#  task default: :spec
-rescue LoadError
-  puts 'no rspec available'
-end
+require 'ruby-pandoc/rake_tasks'
 
 require 'rdoc/task'
 Rake::RDocTask.new do |rdoc|
@@ -13,4 +8,14 @@ Rake::RDocTask.new do |rdoc|
   rdoc.title = "ruby-pandoc #{version}"
   rdoc.rdoc_files.include('README*')
   rdoc.rdoc_files.include('lib/**/*.rb')
+end
+
+begin
+  require 'rspec/core/rake_task'
+
+  RSpec::Core::RakeTask.new(:spec)
+
+  task default: :spec
+rescue LoadError
+  puts 'no rspec available'
 end

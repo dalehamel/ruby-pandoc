@@ -8,7 +8,7 @@ module MakeMakefile::Logging
   @logfile = File::NULL
 end
 
-module Publication
+module RubyPandoc
   module Dependencies
     extend self
 

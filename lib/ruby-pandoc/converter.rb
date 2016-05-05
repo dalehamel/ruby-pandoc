@@ -1,6 +1,5 @@
 require 'open3'
 require 'tempfile'
-require 'timeout'
 
 module RubyPandoc
   class Converter
@@ -63,34 +62,6 @@ module RubyPandoc
       @@pandoc_path = path
     end
 
-    # A shortcut method that creates a new RubyPandoc object and immediately
-    # calls `#convert`. Options passed to this method are passed directly to
-    # `#new` and treated the same as if they were passed directly to the
-    # initializer.
-    def self.convert(*args)
-      new(*args).convert
-    end
-
-    attr_accessor :options
-    def options
-      @options || []
-    end
-
-    attr_accessor :option_string
-    def option_string
-      @option_string || ''
-    end
-
-    attr_accessor :binary_output
-    def binary_output
-      @binary_output || false
-    end
-
-    attr_accessor :writer
-    def writer
-      @writer || 'html'
-    end
-
     # Create a new RubyPandoc converter object. The first argument contains the
     # input either as string or as an array of filenames.
     #
@@ -101,12 +72,17 @@ module RubyPandoc
     #   new(["/path/to/file.md"], :option1 => :value, :option2)
     #   new(["/to/file1.html", "/to/file2.html"], :option1 => :value)
     def initialize(*args)
+      @input_files = nil
+      @input_string = nil
       if args[0].is_a?(String)
         @input_string = args.shift
       elsif args[0].is_a?(Array)
         @input_files = args.shift.join(' ')
       end
-      self.options = args
+      @options = args || []
+      @option_string = nil
+      @binary_output = false
+      @writer = 'html'
     end
 
     # Run the conversion. The convert method can take any number of arguments,
@@ -121,15 +97,18 @@ module RubyPandoc
     #   RubyPandoc.new("# text").convert
     #   # => "<h1 id=\"text\">text</h1>\n"
     def convert(*args)
-      self.options += args if args
-      self.option_string = prepare_options(self.options)
-      if binary_output
-        convert_binary
-      else
-        convert_string
+      tmp_file = Tempfile.new('pandoc-conversion')
+      @options += args if args
+      @options += [{ output: tmp_file.path }]
+      @option_string = prepare_options(@options)
+      output = begin
+        run_pandoc
+        IO.binread(tmp_file)
+      ensure
+        tmp_file.close
+        tmp_file.unlink
       end
     end
-    alias to_s convert
 
     # Generate class methods for each of the readers in RubyPandoc::READERS.
     # When one of these methods is called, it simply calls the initializer
@@ -170,49 +149,19 @@ module RubyPandoc
     # and written to, then read back into the program as a string, then the
     # temp file is closed and unlinked.
     def convert_binary
-      tmp_file = Tempfile.new('pandoc-conversion')
-      begin
-        self.options += [{ output: tmp_file.path }]
-        self.option_string = "#{option_string} --output #{tmp_file.path}"
-        execute("#{@@pandoc_path}#{option_string}")
-        return IO.binread(tmp_file)
-      ensure
-        tmp_file.close
-        tmp_file.unlink
-      end
     end
 
-    # Execute the pandoc command for string writers.
-    def convert_string
-      if ! @input_files.nil?
-        execute("#{@@pandoc_path} #{@input_files}#{option_string}")
+     # Wrapper to run pandoc in a consistent, DRY way
+    def run_pandoc
+      command = unless @input_files.nil? || @input_files.empty?
+        "#{@@pandoc_path} #{@input_files} #{@option_string}"
       else
-        execute("#{@@pandoc_path}#{option_string}")
+        "#{@@pandoc_path} #{@option_string}"
       end
-    end
-
-    # Run the command and returns the output.
-    def execute(command)
       output = error = exit_status = nil
-      @timeout ||= 31_557_600 # A year should be enough?
-      Open3.popen3(command) do |stdin, stdout, stderr, wait_thr|
-        begin
-          Timeout.timeout(@timeout) do
-            unless @input_string.nil?
-              stdin.puts @input_string
-              stdin.close
-            end
-            output = stdout.read
-            error = stderr.read
-            exit_status = wait_thr.value
-          end
-        rescue Timeout::Error => ex
-          Process.kill 9, wait_thr.pid
-          maybe_ex = "\n#{ex}" if ex
-          error = "Pandoc timed out after #{@timeout} seconds.#{maybe_ex}"
-        end
-      end
-
+      options = {}
+      options[:stdin_data] = @input_string if @input_string
+      output, error, exit_status = Open3.capture3(command, **options)
       raise error unless exit_status && exit_status.success?
       output
     end
@@ -239,7 +188,6 @@ module RubyPandoc
       return '' unless flag
       flag = flag.to_s
       set_pandoc_ruby_options(flag, argument)
-      return '' if flag == 'timeout' # pandoc doesn't accept timeouts yet
       if !argument.nil?
         "#{format_flag(flag)} #{argument}"
       else
@@ -262,10 +210,8 @@ module RubyPandoc
     def set_pandoc_ruby_options(flag, argument = nil)
       case flag
       when 't', 'to'
-        self.writer = argument.to_s
-        self.binary_output = true if BINARY_WRITERS.keys.include?(writer)
-      when 'timeout'
-        @timeout = argument
+        @writer = argument.to_s
+        @binary_output = true if BINARY_WRITERS.keys.include?(@writer)
       end
     end
   end
