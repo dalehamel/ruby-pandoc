@@ -1,4 +1,5 @@
 require 'ruby-pandoc/rake_tasks'
+require 'bundler/gem_tasks'
 
 require 'rdoc/task'
 Rake::RDocTask.new do |rdoc|
