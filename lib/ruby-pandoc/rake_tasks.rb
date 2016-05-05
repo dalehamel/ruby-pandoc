@@ -1,7 +1,6 @@
 require 'rake'
 
-module Publisher
-  # Loads all rake tasks when terraform_dsl is included by a rake script
+module RubyPandoc
   module Tasks
     extend self
 
@@ -11,4 +10,4 @@ module Publisher
   end
 end
 
-Publisher::Tasks.load_all
+RubyPandoc::Tasks.load_all
